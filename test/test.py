@@ -704,3 +704,19 @@ class CepimoseTestCase(unittest.TestCase):
         data_today = cepimose.vaccinations_gender_by_date(test_today_without_time)
         print(f"Today: {test_date_today}")
         self.assertIsNot(data_today, None)
+
+    def test_vaccinations_in_range_by_age_group_by_gender(self):
+
+        start_date = datetime.datetime(2020, 12, 27)
+        end_date = datetime.datetime(2021, 9, 14)
+
+        data = cepimose.vaccinations_in_range_by_age_group_by_gender(
+            start_date, end_date
+        )
+
+        group90 = data[AgeGroup.GROUP_90]
+        self.assertEqual(group90.age_group, AgeGroup.GROUP_90)
+        self.assertAlmostEqual(group90.female.dose1, 9062, delta=200)
+        self.assertAlmostEqual(group90.female.dose2, 7438, delta=200)
+        self.assertAlmostEqual(group90.male.dose1, 2969, delta=200)
+        self.assertAlmostEqual(group90.male.dose2, 2382, delta=200)

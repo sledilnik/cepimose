@@ -7,6 +7,7 @@ from .enums import Region, AgeGroup, Manufacturer, Gender
 from .commands import (
     _get_date_range_group_commands,
     _create_manufacturers_used_commands,
+    _create_in_range_by_age_by_gender_command,
 )
 
 _source = "https://wabi-west-europe-e-primary-api.analysis.windows.net/public/reports/querydata?synchronous=true"
@@ -1932,6 +1933,35 @@ def _create_vaccinations_data_range_request(
         group_req, male1_req, male2_req, female1_req, female2_req, manufacturers_req
     )
     return requests
+
+
+# DATE RANGE -> AGE GROUP -> GENDER
+def _create_in_range_age_group_gender_requests(
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
+):
+    create_age_group_gender_command = _create_in_range_by_age_by_gender_command(
+        start_date, end_date
+    )
+    age_group_obj = {}
+    for age_group in AgeGroup:
+        create_gender_command = create_age_group_gender_command(age_group)
+        male_command = create_gender_command(Gender.MALE)
+        female_command = create_gender_command(Gender.FEMALE)
+
+        male_first = _create_req("vaccinations", [male_command["first"]])
+        male_second = _create_req("vaccinations", [male_command["second"]])
+        female_first = _create_req("vaccinations", [female_command["first"]])
+        female_second = _create_req("vaccinations", [female_command["second"]])
+
+        age_group_obj[age_group] = {
+            "male_first": male_first,
+            "male_second": male_second,
+            "female_first": female_first,
+            "female_second": female_second,
+        }
+
+    return age_group_obj
 
 
 # DASHBOARD LAB

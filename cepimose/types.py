@@ -116,6 +116,15 @@ class VaccinationsDoses:
 
 
 @dataclass
+class VaccinationsInDateRangeAgeGroupGender:
+    date_start: datetime.datetime
+    date_end: datetime.datetime
+    age_group: AgeGroup
+    male: VaccinationsDoses
+    female: VaccinationsDoses
+
+
+@dataclass
 class VaccinationsDateRangeByGroup:
     date_from: datetime.datetime
     date_to: datetime.datetime

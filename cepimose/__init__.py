@@ -20,6 +20,7 @@ from .data import (
     _vaccination_by_manufacturer_supplied_used_requests,
     _vaccinations_gender_by_date_requests,
     _create_vaccinations_data_range_request,
+    _create_in_range_age_group_gender_requests,
     _vaccinations_by_manufacturer_used_request,
     _lab_start_ts_req,
     _lab_end_ts_req,
@@ -64,6 +65,7 @@ from .parser import (
 from .types import (
     VaccinationByAgeRow,
     VaccinationByDayRow,
+    VaccinationDose,
     VaccinationsByGender,
     VaccinationsDateRangeByGroup,
     VaccinationsDoses,
@@ -71,6 +73,7 @@ from .types import (
     VaccinationByRegionRow,
     VaccinationByManufacturerRow,
     VaccinationAgeGroupByRegionOnDay,
+    VaccinationsInDateRangeAgeGroupGender,
     LabDashboard,
 )
 
@@ -478,6 +481,35 @@ def vaccinations_date_range(
     for manu in manufacturers:
         result.__setattr__(manu.name, VaccinationsDoses(manu.dose1, manu.dose2))
 
+    return result
+
+
+def vaccinations_in_range_by_age_group_by_gender(
+    start_date=datetime.datetime(2020, 12, 26),
+    end_date=datetime.datetime.today().date(),
+) -> "dict[AgeGroup]":
+    requests = _create_in_range_age_group_gender_requests(start_date, end_date)
+    result = {}
+    for [age_group, gender_requests] in requests.items():
+        group = VaccinationsInDateRangeAgeGroupGender(
+            date_start=start_date,
+            date_end=end_date,
+            age_group=age_group,
+            male=VaccinationsDoses(),
+            female=VaccinationsDoses(),
+        )
+
+        doses = [
+            _get_data(_request, _parse_single_data)
+            for _request in gender_requests.values()
+        ]
+        [
+            group.male.dose1,
+            group.male.dose2,
+            group.female.dose1,
+            group.female.dose2,
+        ] = doses
+        result[age_group] = group
     return result
 
 

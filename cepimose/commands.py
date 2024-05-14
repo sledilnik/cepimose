@@ -542,3 +542,409 @@ def _create_manufacturers_used_commands():
         obj[manu] = _get_default_manufacturer_used_command(manu)
 
     return obj
+
+
+def _create_in_range_by_age_by_gender_command(
+    date_start: datetime.datetime, date_end: datetime.datetime
+):
+    def _create_by_age_by_gender_command(age_group: AgeGroup):
+        def _create_by_gender_command(gender: Gender):
+
+            _from = [
+                {"Name": "e", "Entity": "eRCO_​​podatki", "Type": 0},
+                {"Name": "c", "Entity": "Calendar", "Type": 0},
+                {"Name": "x", "Entity": "xls_SURS_starost", "Type": 0},
+            ]
+
+            first_select = [
+                {
+                    "Measure": {
+                        "Expression": {"SourceRef": {"Source": "e"}},
+                        "Property": "Weight for 1",
+                    },
+                    "Name": "eRCO_podatki.Weight for 1",
+                }
+            ]
+
+            second_select = [
+                {
+                    "Aggregation": {
+                        "Expression": {
+                            "Column": {
+                                "Expression": {"SourceRef": {"Source": "e"}},
+                                "Property": "Precepljenost",
+                            }
+                        },
+                        "Function": 0,
+                    },
+                    "Name": "Sum(eRCO_podatki_ed.Precepljenost)",
+                }
+            ]
+
+            first_order_by = [
+                {
+                    "Direction": 2,
+                    "Expression": {
+                        "Measure": {
+                            "Expression": {"SourceRef": {"Source": "e"}},
+                            "Property": "Weight for 1",
+                        }
+                    },
+                }
+            ]
+
+            second_order_by = [
+                {
+                    "Direction": 2,
+                    "Expression": {
+                        "Aggregation": {
+                            "Expression": {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "e"}},
+                                    "Property": "Precepljenost",
+                                }
+                            },
+                            "Function": 0,
+                        }
+                    },
+                }
+            ]
+
+            binding = {
+                "Primary": {"Groupings": [{"Projections": [0]}]},
+                "DataReduction": {
+                    "DataVolume": 3,
+                    "Primary": {"Window": {}},
+                },
+                "Version": 1,
+            }
+
+            def _first_dose_command():
+                return {
+                    "SemanticQueryDataShapeCommand": {
+                        "Query": {
+                            "Version": 2,
+                            "From": _from,
+                            "Select": first_select,
+                            "Where": [
+                                {
+                                    "Condition": {
+                                        "In": {
+                                            "Expressions": [
+                                                {
+                                                    "Column": {
+                                                        "Expression": {
+                                                            "SourceRef": {"Source": "e"}
+                                                        },
+                                                        "Property": "OsebaSpol",
+                                                    }
+                                                }
+                                            ],
+                                            "Values": [
+                                                [
+                                                    {
+                                                        "Literal": {
+                                                            "Value": f"'{gender.value}'"
+                                                        }
+                                                    }
+                                                ]
+                                            ],
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "And": {
+                                            "Left": {
+                                                "Comparison": {
+                                                    "ComparisonKind": 2,
+                                                    "Left": {
+                                                        "Column": {
+                                                            "Expression": {
+                                                                "SourceRef": {
+                                                                    "Source": "c"
+                                                                }
+                                                            },
+                                                            "Property": "Date",
+                                                        }
+                                                    },
+                                                    "Right": {
+                                                        "Literal": {
+                                                            "Value": f"datetime'{date_start.isoformat()}'"
+                                                        }
+                                                    },
+                                                }
+                                            },
+                                            "Right": {
+                                                "Comparison": {
+                                                    "ComparisonKind": 3,
+                                                    "Left": {
+                                                        "Column": {
+                                                            "Expression": {
+                                                                "SourceRef": {
+                                                                    "Source": "c"
+                                                                }
+                                                            },
+                                                            "Property": "Date",
+                                                        }
+                                                    },
+                                                    "Right": {
+                                                        "Literal": {
+                                                            "Value": f"datetime'{date_end.isoformat()}'"
+                                                        }
+                                                    },
+                                                }
+                                            },
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "In": {
+                                            "Expressions": [
+                                                {
+                                                    "Column": {
+                                                        "Expression": {
+                                                            "SourceRef": {"Source": "x"}
+                                                        },
+                                                        "Property": "Starostni ​razred",
+                                                    }
+                                                }
+                                            ],
+                                            "Values": [
+                                                [
+                                                    {
+                                                        "Literal": {
+                                                            "Value": f"'{age_group.value}'"
+                                                        }
+                                                    }
+                                                ]
+                                            ],
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "Not": {
+                                            "Expression": {
+                                                "In": {
+                                                    "Expressions": [
+                                                        {
+                                                            "Column": {
+                                                                "Expression": {
+                                                                    "SourceRef": {
+                                                                        "Source": "e"
+                                                                    }
+                                                                },
+                                                                "Property": "CepivoIme",
+                                                            }
+                                                        }
+                                                    ],
+                                                    "Values": [
+                                                        [{"Literal": {"Value": "null"}}]
+                                                    ],
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "Comparison": {
+                                            "ComparisonKind": 1,
+                                            "Left": {
+                                                "Column": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "c"}
+                                                    },
+                                                    "Property": "Date",
+                                                }
+                                            },
+                                            "Right": {
+                                                "DateSpan": {
+                                                    "Expression": {
+                                                        "Literal": {
+                                                            "Value": "datetime'2020-12-26T01:00:00'"
+                                                        }
+                                                    },
+                                                    "TimeUnit": 5,
+                                                }
+                                            },
+                                        }
+                                    }
+                                },
+                            ],
+                            "OrderBy": first_order_by,
+                        },
+                        "Binding": binding,
+                        "ExecutionMetricsKind": 1,
+                    }
+                }
+
+            def _second_dose_command():
+                return {
+                    "SemanticQueryDataShapeCommand": {
+                        "Query": {
+                            "Version": 2,
+                            "From": _from,
+                            "Select": second_select,
+                            "Where": [
+                                {
+                                    "Condition": {
+                                        "In": {
+                                            "Expressions": [
+                                                {
+                                                    "Column": {
+                                                        "Expression": {
+                                                            "SourceRef": {"Source": "e"}
+                                                        },
+                                                        "Property": "OsebaSpol",
+                                                    }
+                                                }
+                                            ],
+                                            "Values": [
+                                                [
+                                                    {
+                                                        "Literal": {
+                                                            "Value": f"'{gender.value}'"
+                                                        }
+                                                    }
+                                                ]
+                                            ],
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "And": {
+                                            "Left": {
+                                                "Comparison": {
+                                                    "ComparisonKind": 2,
+                                                    "Left": {
+                                                        "Column": {
+                                                            "Expression": {
+                                                                "SourceRef": {
+                                                                    "Source": "c"
+                                                                }
+                                                            },
+                                                            "Property": "Date",
+                                                        }
+                                                    },
+                                                    "Right": {
+                                                        "Literal": {
+                                                            "Value": f"datetime'{date_start.isoformat()}'"
+                                                        }
+                                                    },
+                                                }
+                                            },
+                                            "Right": {
+                                                "Comparison": {
+                                                    "ComparisonKind": 3,
+                                                    "Left": {
+                                                        "Column": {
+                                                            "Expression": {
+                                                                "SourceRef": {
+                                                                    "Source": "c"
+                                                                }
+                                                            },
+                                                            "Property": "Date",
+                                                        }
+                                                    },
+                                                    "Right": {
+                                                        "Literal": {
+                                                            "Value": f"datetime'{date_end.isoformat()}'"
+                                                        }
+                                                    },
+                                                }
+                                            },
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "In": {
+                                            "Expressions": [
+                                                {
+                                                    "Column": {
+                                                        "Expression": {
+                                                            "SourceRef": {"Source": "x"}
+                                                        },
+                                                        "Property": "Starostni ​razred",
+                                                    }
+                                                }
+                                            ],
+                                            "Values": [
+                                                [
+                                                    {
+                                                        "Literal": {
+                                                            "Value": f"'{age_group.value}'"
+                                                        }
+                                                    }
+                                                ]
+                                            ],
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "Not": {
+                                            "Expression": {
+                                                "In": {
+                                                    "Expressions": [
+                                                        {
+                                                            "Column": {
+                                                                "Expression": {
+                                                                    "SourceRef": {
+                                                                        "Source": "e"
+                                                                    }
+                                                                },
+                                                                "Property": "CepivoIme",
+                                                            }
+                                                        }
+                                                    ],
+                                                    "Values": [
+                                                        [{"Literal": {"Value": "null"}}]
+                                                    ],
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "Condition": {
+                                        "Comparison": {
+                                            "ComparisonKind": 1,
+                                            "Left": {
+                                                "Column": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "c"}
+                                                    },
+                                                    "Property": "Date",
+                                                }
+                                            },
+                                            "Right": {
+                                                "DateSpan": {
+                                                    "Expression": {
+                                                        "Literal": {
+                                                            "Value": "datetime'2020-12-26T01:00:00'"
+                                                        }
+                                                    },
+                                                    "TimeUnit": 5,
+                                                }
+                                            },
+                                        }
+                                    }
+                                },
+                            ],
+                            "OrderBy": second_order_by,
+                        },
+                        "Binding": binding,
+                        "ExecutionMetricsKind": 1,
+                    }
+                }
+
+            return {"first": _first_dose_command(), "second": _second_dose_command()}
+
+        return _create_by_gender_command
+
+    return _create_by_age_by_gender_command
